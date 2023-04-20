@@ -58,12 +58,12 @@
     Посмотрим системные вызовы, с помщью комады:
 
      ```bash
-    rstrace opensnoop-bpfcc -n 1 -d 2>&1 | grep openat
+    sudo strace opensnoop-bpfcc  2>&1 | grep openat
     ```
     Результат выдает в основном билиотеки Python и libc
     
 <details>
-     ```bash
+
     openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
     openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
     openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libexpat.so.1", O_RDONLY|O_CLOEXEC) = 3
@@ -474,7 +474,6 @@
     openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libbz2.so.1.0", O_RDONLY|O_CLOEXEC) = 3
     openat(AT_FDCWD, "/usr/lib/python3.10/__pycache__/lzma.cpython-310.pyc", O_RDONLY|O_CLOEXEC) = 3
     openat(AT_FDCWD, "/usr/lib/python3.10/lib-dynload/_lzma.cpython-310-x86_64-linux-gnu.so", O_RDONLY|O_CLOEXEC) = 3
-        ```
 </details>
 
 
