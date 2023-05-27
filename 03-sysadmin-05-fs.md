@@ -6,11 +6,11 @@
 
 Разреженный файл - это файл, в котором последовательности нулевых байтов заменены на информацию об этих последовательностях (список дыр). Такой файл эффективен, потому что он не хранит нули на диске, вместо этого он содержит достаточно метаданных, описывающих нули, которые будут сгенерированы.
 
-1. Могут ли файлы, являющиеся жёсткой ссылкой на один объект, иметь разные права доступа и владельца? Почему?
+2. Могут ли файлы, являющиеся жёсткой ссылкой на один объект, иметь разные права доступа и владельца? Почему?
 
 Не могут. Это ссылки на один и тот же inode - именно в нём и хранятся права доступа и имя владельца.
 
-1. Сделайте `vagrant destroy` на имеющийся инстанс Ubuntu. Замените содержимое Vagrantfile следующим:
+3. Сделайте `vagrant destroy` на имеющийся инстанс Ubuntu. Замените содержимое Vagrantfile следующим:
 
     ```ruby
     path_to_disk_folder = './disks'
@@ -63,7 +63,7 @@ sdb                         8:16   0  2.5G  0 disk
 sdc                         8:32   0  2.5G  0 disk 
 ```
 
-1. Используя `fdisk`, разбейте первый диск на два раздела: 2 Гб и оставшееся пространство.
+4. Используя `fdisk`, разбейте первый диск на два раздела: 2 Гб и оставшееся пространство.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo fdisk /dev/sdb
@@ -98,7 +98,7 @@ Last sector, +/-sectors or +/-size{K,M,G,T,P} (4196352-5242879, default 5242879)
 Created a new partition 2 of type 'Linux' and of size 511 MiB.
 ```
 
-1. Используя `sfdisk`, перенесите эту таблицу разделов на второй диск.
+5. Используя `sfdisk`, перенесите эту таблицу разделов на второй диск.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo sfdisk -d /dev/sdb > sdb.dump
@@ -133,7 +133,7 @@ Calling ioctl() to re-read partition table.
 Syncing disks.
 ```
 
-1. Соберите `mdadm` RAID1 на паре разделов 2 Гб.
+6. Соберите `mdadm` RAID1 на паре разделов 2 Гб.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo mdadm --create /dev/md1 --level=1 --raid-devices=2 /dev/sd[bc]1
@@ -147,7 +147,7 @@ mdadm: Defaulting to version 1.2 metadata
 mdadm: array /dev/md1 started.
 ```
 
-1. Соберите `mdadm` RAID0 на второй паре маленьких разделов.
+7. Соберите `mdadm` RAID0 на второй паре маленьких разделов.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo mdadm --create /dev/md2 --level=0 --raid-devices=2 /dev/sd[bc]2
@@ -155,7 +155,7 @@ mdadm: Defaulting to version 1.2 metadata
 mdadm: array /dev/md2 started.
 ```
 
-1. Создайте два независимых PV на получившихся md-устройствах.
+8. Создайте два независимых PV на получившихся md-устройствах.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo pvcreate /dev/md1
@@ -164,21 +164,21 @@ vagrant@sysadm-fs:~$ sudo pvcreate /dev/md2
   Physical volume "/dev/md2" successfully created.
 ```
 
-1. Создайте общую volume-group на этих двух PV.
+9. Создайте общую volume-group на этих двух PV.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo vgcreate ntlg /dev/md1 /dev/md2
   Volume group "ntlg" successfully created
 ```
 
-1. Создайте LV размером 100 Мб, указав его расположение на PV с RAID0.
+10. Создайте LV размером 100 Мб, указав его расположение на PV с RAID0.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo vgcreate ntlg /dev/md1 /dev/md2
   Volume group "ntlg" successfully created
 ```
 
-1. Создайте `mkfs.ext4` ФС на получившемся LV.
+11. Создайте `mkfs.ext4` ФС на получившемся LV.
 
 ```bash
 vagrant@sysadm-fs:~$ sudo mkfs.ext4 -L ntlg-ext4 -m 1 /dev/mapper/ntlg-ntlg--lv
@@ -192,16 +192,18 @@ Writing superblocks and filesystem accounting information: done
 
 vagrant@sysadm-fs:~$ sudo blkid | grep ntlg-ntlg--lv
 /dev/mapper/ntlg-ntlg--lv: LABEL="ntlg-ext4" UUID="27c61349-37e7-43ef-92ab-791a75708544" TYPE="ext4"
+```
 
-1. Смонтируйте этот раздел в любую директорию, например, `/tmp/new`.
+12. Смонтируйте этот раздел в любую директорию, например, `/tmp/new`.
 
+```bash
 vagrant@sysadm-fs:~$ mkdir /tmp/new
 vagrant@sysadm-fs:~$ sudo mount /dev/mapper/ntlg-ntlg--lv /tmp/new
 vagrant@sysadm-fs:~$ sudo mount | grep ntlg-ntlg--lv
 /dev/mapper/ntlg-ntlg--lv on /tmp/new type ext4 (rw,relatime,stripe=256)
 ```
 
-1. Поместите туда тестовый файл, например, `wget https://mirror.yandex.ru/ubuntu/ls-lR.gz -O /tmp/new/test.gz`.
+13. Поместите туда тестовый файл, например, `wget https://mirror.yandex.ru/ubuntu/ls-lR.gz -O /tmp/new/test.gz`.
 
 ```bash
 vagrant@sysadm-fs:~$ cd /tmp/new
@@ -225,7 +227,7 @@ drwx------  2 root root  16K May 27 16:01 lost+found
 -rw-r--r--  1 root root  24M May 27 14:58 test.gz
 ```
 
-1. Прикрепите вывод `lsblk`.
+14. Прикрепите вывод `lsblk`.
 
 ```bash
 vagrant@sysadm-fs:/tmp/new$ lsblk
@@ -254,7 +256,7 @@ sdc                         8:32   0  2.5G  0 disk
     └─ntlg-ntlg--lv       253:1    0  100M  0 lvm   /tmp/new
 ```
 
-1. Протестируйте целостность файла:
+15. Протестируйте целостность файла:
 
     ```bash
     vagrant@sysadm-fs:/tmp/new$ gzip -t test.gz
@@ -262,7 +264,7 @@ sdc                         8:32   0  2.5G  0 disk
 	0
     ```
 
-1. Используя pvmove, переместите содержимое PV с RAID0 на RAID1.
+16. Используя pvmove, переместите содержимое PV с RAID0 на RAID1.
 
 ```bash
 root@sysadm-fs:/tmp/new# pvmove -n ntlg-lv /dev/md2 /dev/md1
@@ -270,14 +272,14 @@ root@sysadm-fs:/tmp/new# pvmove -n ntlg-lv /dev/md2 /dev/md1
   /dev/md2: Moved: 100.00%
 ```
 
-1. Сделайте `--fail` на устройство в вашем RAID1 md.
+17. Сделайте `--fail` на устройство в вашем RAID1 md.
 
 ```bash
 root@sysadm-fs:/tmp/new# mdadm --fail /dev/md1 /dev/sdb1
 mdadm: set /dev/sdb1 faulty in /dev/md1
 ```
 
-1. Подтвердите выводом `dmesg`, что RAID1 работает в деградированном состоянии.
+18. Подтвердите выводом `dmesg`, что RAID1 работает в деградированном состоянии.
 
 ```bash
 root@sysadm-fs:/tmp/new# dmesg | grep md1 | tail -n 2
@@ -285,12 +287,12 @@ root@sysadm-fs:/tmp/new# dmesg | grep md1 | tail -n 2
                md/raid1:md1: Operation continuing on 1 devices.
 ```
 
-1. Протестируйте целостность файла — он должен быть доступен несмотря на «сбойный» диск:
+19. Протестируйте целостность файла — он должен быть доступен несмотря на «сбойный» диск:
 
 	```bash    
 	root@sysadm-fs:/tmp/new# gzip -t test.gz
 	root@sysadm-fs:/tmp/new# echo $?
 	0
 	```
-1. Погасите тестовый хост — `vagrant destroy`.
+20. Погасите тестовый хост — `vagrant destroy`.
 
